@@ -1,0 +1,45 @@
+{
+  "name": "nursing-backend",
+  "version": "1.0.0",
+  "main": "dist/app.js",
+  "module": "types",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "dev": "node --exec npx ts-node src/app.ts",
+    "start": "node dist/app.js",
+    "typeorm": "typeorm-ts-node-commonjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.864.0",
+    "@aws-sdk/lib-storage": "^3.864.0",
+    "aws-sdk": "^2.1692.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-fileupload": "^1.5.2",
+    "firebase-admin": "^13.4.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.6",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.10.0",
+    "razorpay": "^2.9.6",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.18.0",
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
