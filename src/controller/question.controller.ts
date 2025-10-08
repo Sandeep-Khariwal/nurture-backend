@@ -4,6 +4,7 @@ import { ModuleService } from "../services/module.service";
 import { QuestionService } from "../services/question.service";
 import { Request, Response } from "express";
 import { uploadMediaFile } from "../aws/awsHelper";
+import { QuizQuestionService } from "../services/quizQuestion.service";
 
 export const CreateQuestion = async (req: Request, res: Response) => {
   const { question, questionId } = req.body;
@@ -40,8 +41,11 @@ export const CreateQuestion = async (req: Request, res: Response) => {
 };
 export const UploadQuestioImage = async (req: Request, res: Response) => {
   try {
-    const {questionId} = req.body;
+    const { questionId } = req.body;
+    let normalQuestion = questionId.startsWith("QS");
+
     const questionService = new QuestionService();
+    const quizService = new QuizQuestionService();
     const files = req.files as {
       questionImage?: Express.Multer.File[];
     };
@@ -63,7 +67,17 @@ export const UploadQuestioImage = async (req: Request, res: Response) => {
 
     let response;
     if (questionImageUrl) {
-      response = await questionService.addImageToQuestion(questionId, questionImageUrl);
+      if (normalQuestion) {
+        response = await questionService.addImageToQuestion(
+          questionId,
+          questionImageUrl
+        );
+      } else {
+        response = await quizService.addImageToQuestion(
+          questionId,
+          questionImageUrl
+        );
+      }
     }
 
     if (response["status"] === 200) {
@@ -87,9 +101,17 @@ export const UploadQuestioImage = async (req: Request, res: Response) => {
 
 export const RemoveImageFromQuestion = async (req: Request, res: Response) => {
   const { questionId } = req.body;
-  const questionService = new QuestionService();
+  let normalQuestion = questionId.startsWith("QS");
 
-  const response = await questionService.removeImageFromQuestion(questionId);
+  const questionService = new QuestionService();
+  const quizService = new QuizQuestionService();
+
+  let response;
+  if (normalQuestion) {
+    response = await questionService.removeImageFromQuestion(questionId);
+  } else {
+    response = await quizService.removeImageFromQuestion(questionId);
+  }
   if (response["status"] === 200) {
     res.status(response["status"]).json({
       status: 200,

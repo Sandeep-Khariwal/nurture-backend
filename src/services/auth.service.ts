@@ -5,6 +5,8 @@ import { CreateHtmlForOTP } from "../email/CreatehtmlForOTP";
 import { generateAccessToken } from "../middleware/jwtToken";
 import adminModel from "../models/admin.model";
 import bcrypt from "bcryptjs";
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 export class AuthService {
   public async signup(

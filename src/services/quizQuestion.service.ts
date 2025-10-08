@@ -49,9 +49,13 @@ export class QuizQuestionService {
     }
   ) {
     try {
-      const updatedQuestion = await QuizQuestion.findByIdAndUpdate(id, question, {
-        new: true,
-      });
+      const updatedQuestion = await QuizQuestion.findByIdAndUpdate(
+        id,
+        question,
+        {
+          new: true,
+        }
+      );
       return {
         status: 200,
         question: updatedQuestion,
@@ -61,7 +65,7 @@ export class QuizQuestionService {
       return { status: 200, message: error.message };
     }
   }
-  
+
   public async updateStudentResponseById(
     id: string,
     student: {
@@ -86,16 +90,16 @@ export class QuizQuestionService {
       question.attempt.push(student);
       const updatedQuestion = await question.save();
 
-      return { status: 200, question : updatedQuestion };
+      return { status: 200, question: updatedQuestion };
     } catch (error) {
       return { status: 200, message: error.message };
     }
   }
   public async getQuestionById(id: string) {
     try {
-      const question = await QuizQuestion.findById(id,{ isDeleted:false});
-      if(!question){
-        return {status:404,message:"Question not found"}
+      const question = await QuizQuestion.findById(id, { isDeleted: false });
+      if (!question) {
+        return { status: 404, message: "Question not found" };
       }
       return { status: 200, question: question };
     } catch (error) {
@@ -123,9 +127,8 @@ export class QuizQuestionService {
       const questions = await QuizQuestion.find({ quizId: moduleId });
 
       // Step 2: Remove student attempt from each question
-      const updatePromises = questions.map((question) =>
-      {
-       return QuizQuestion.findByIdAndUpdate(
+      const updatePromises = questions.map((question) => {
+        return QuizQuestion.findByIdAndUpdate(
           question._id,
           {
             $pull: {
@@ -133,12 +136,11 @@ export class QuizQuestionService {
             },
           },
           { new: true }
-        )
-      }
-      );
+        );
+      });
 
       const updatedQuestions = await Promise.all(updatePromises);
-      
+
       return { status: 200, updatedQuestions };
     } catch (error) {
       return { status: 500, message: error.message };
@@ -170,4 +172,40 @@ export class QuizQuestionService {
     }
   }
 
+  public async addImageToQuestion(id: string, imageUrl: string) {
+    try {
+      const question = await QuizQuestion.findByIdAndUpdate(
+        id,
+        {
+          $set: { imageUrl: imageUrl },
+        },
+        { new: true }
+      );
+
+      if (!question) {
+        return { status: 404, message: "Question not found!!" };
+      }
+      return { status: 200, question, message: "Image Added!!" };
+    } catch (error) {
+      return { status: 500, message: error.message };
+    }
+  }
+    public async removeImageFromQuestion(id: string) {
+      try {
+        const question = await QuizQuestion.findByIdAndUpdate(
+          id,
+          {
+            $set: { imageUrl: "" },
+          },
+          { new: true }
+        );
+  
+        if (!question) {
+          return { status: 404, message: "Question not found!!" };
+        }
+        return { status: 200, question, message: "Image Removed!!" };
+      } catch (error) {
+        return { status: 500, message: error.message };
+      }
+    }
 }

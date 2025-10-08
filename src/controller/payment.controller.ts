@@ -5,6 +5,11 @@ import { QuizService } from "../services/quiz.service";
 import { StudentService } from "../services/student.service";
 import { SubscriptionService } from "../services/subscription.service";
 import { SubscriptionType } from "../enums/subscription";
+import { CreateHtmlForSubscription } from "../email/CreateHtmlForSubscription";
+import { sendMail } from "../email/CreateEmail";
+import { FormatDate } from "../HelperFunction";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 export const GetRazorpayKeys = (req: Request, res: Response) => {
   res.status(200).json({
@@ -106,6 +111,7 @@ export const PurchaseSubscription = async (req: Request, res: Response) => {
     if (event.event === "payment.authorized") {
       const payment = req.body.payload.payment.entity;
       const notes = payment.notes;
+      
 
       const user = {
         studentId: notes.studentId,
@@ -120,18 +126,23 @@ export const PurchaseSubscription = async (req: Request, res: Response) => {
       const subscriptionResp = await subscriptionService.getSubscriptionsById(
         notes.mainPlanId
       );
+      const studentResp = await studentService.getStudentById(user.studentId);
 
       let newSubscription;
+      let months;
+      let subscriptionStartDate;
+      let subscriptionEndDate;
+      let plan;
+      let subscriptionName
       if (subscriptionResp["status"] === 200) {
         const subscription = subscriptionResp["subscription"];
-        const plan = subscription.plans.find(
+        plan = subscription.plans.find(
           (plan: any) => plan._id.toString() === notes.planId.toString()
         );
-        console.log("user  : ", user,plan);
-        
         if (SubscriptionType.MONTHLY === plan.subscriptionType) {
+          subscriptionName = subscription.name
           const totalMonths = plan.duration.split(" ")[0];
-          const months = Number(totalMonths);
+          months = Number(totalMonths);
 
           const date = new Date();
           const fiveAndHalfHoursInMs = 5.5 * 60 * 60 * 1000;
@@ -139,7 +150,8 @@ export const PurchaseSubscription = async (req: Request, res: Response) => {
           // const subscriptionEnd = new Date(now.getTime() + 5 * 60 * 1000);
           const subscriptionEnd = new Date(now);
           subscriptionEnd.setMonth(subscriptionEnd.getMonth() + months);
-
+          subscriptionStartDate = now;
+          subscriptionEndDate = subscriptionEnd;
           newSubscription = {
             examId: user.examId,
             subscriptionStart: now,
@@ -157,15 +169,17 @@ export const PurchaseSubscription = async (req: Request, res: Response) => {
             },
           };
         } else {
+          subscriptionName = subscription.name
           const years = plan.duration.split(" ")[0];
-          const months = Number(years) * 12;
+          months = Number(years) * 12;
 
           const date = new Date();
           const fiveAndHalfHoursInMs = 5.5 * 60 * 60 * 1000;
           const now = new Date(date.getTime() + fiveAndHalfHoursInMs);
           const subscriptionEnd = new Date(now);
           subscriptionEnd.setMonth(subscriptionEnd.getMonth() + months);
-
+          subscriptionStartDate = now;
+          subscriptionEndDate = subscriptionEnd;
           newSubscription = {
             examId: user.examId,
             subscriptionStart: now,
@@ -182,6 +196,25 @@ export const PurchaseSubscription = async (req: Request, res: Response) => {
               accessPrioritySupport: true,
             },
           };
+        }
+      }
+
+      if (studentResp["status"] === 200) {
+        const student = studentResp["user"];
+
+        if (student.email) {
+          sendMail(
+            process.env.MAIL,
+            student.email,
+            "Subscription Confirmation!",
+            CreateHtmlForSubscription({
+              fullName: student.name,
+              subscriptionName: subscriptionName,
+              planMonths: months,
+              subscriptionStart: FormatDate(subscriptionStartDate),
+              subscriptionEnd: FormatDate(subscriptionEndDate),
+            })
+          );
         }
       }
       await studentService.updateSubscriptionInStudent(

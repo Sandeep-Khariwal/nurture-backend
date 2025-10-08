@@ -156,3 +156,12 @@ export const IsPrioritySupportAccessible = (student: any, examId: string) => {
   }
   return accessPrioritySupport;
 };
+
+export function FormatDate(date: string | Date): string {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return new Date(date).toLocaleDateString(undefined, options);
+}

@@ -12,6 +12,7 @@ interface QuizQuestionsModel {
     optionId: string;
   }[];
   correctAns: string;
+  imageUrl: string;
   explaination: string;
   isDeleted: boolean;
 }
@@ -60,6 +61,10 @@ const quizQuestionSchema = new Schema<QuizQuestionsModel>({
     ref: "quiz",
   },
   correctAns: {
+    type: String,
+    default: "",
+  },
+  imageUrl: {
     type: String,
     default: "",
   },

@@ -1,3 +1,5 @@
+import { StudentService } from "../services/student.service";
+import { clientRequest } from "../middleware/jwtToken";
 import { ExamService } from "../services/exam.service";
 import { DailyDoseService } from "./../services/dailyDoseQuestion";
 import { Request, Response } from "express";
@@ -9,18 +11,17 @@ export const CreateDailyDoseQuestion = async (req: Request, res: Response) => {
   let examId = req.body.examId;
   const dailyDoseService = new DailyDoseService();
   const examService = new ExamService();
-  
+
   let examResp;
   if (examName && !examId) {
     examResp = await examService.getExamIdByName(examName);
   }
-  if(examName){
-    if(examResp["status"]===200){
-      examId = examResp["exam"]._id
+  if (examName) {
+    if (examResp["status"] === 200) {
+      examId = examResp["exam"]._id;
     }
   }
 
-  
   let response;
   if (!questionId) {
     response = await dailyDoseService.createDailyDoseQuestion(
@@ -59,16 +60,23 @@ export const CreateDailyDoseQuestion = async (req: Request, res: Response) => {
       .json({ status: response["status"], message: response["message"] });
   }
 };
-export const GetTodayQuestion = async (req: Request, res: Response) => {
+export const GetTodayQuestion = async (req: clientRequest, res: Response) => {
   const { id } = req.params;
+  const studentId = req.user._id;
+
   const dailyDoseService = new DailyDoseService();
   const examService = new ExamService();
+  const studentService = new StudentService();
   const response = await dailyDoseService.getTodayQuestion(id);
   const examResponse = await examService.getExamById(id);
+  const studentResp = await studentService.getStudentById(studentId);
 
   let roadmapToSuccess = "";
-  if (examResponse["status"] === 200) {
-    roadmapToSuccess = examResponse["exam"].roadmapToSuccess;
+  if (examResponse["status"] === 200 && studentResp["status"] === 200) {
+    const user = studentResp["user"];
+    if (user.subscriptions.length) {
+      roadmapToSuccess = examResponse["exam"].roadmapToSuccess;
+    }
   }
 
   if (response["status"] === 200) {

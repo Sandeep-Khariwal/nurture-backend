@@ -84,7 +84,7 @@ export const CreateHtmlForOTP = (otp:string) =>{
                     <div class="otp-container">
                         <span>${otp}</span>
                     </div>
-                    <p>Please note that this OTP is valid for 10 minutes. If you didn't request this verification, please ignore this email.</p>
+                    <p>Please note that this OTP is valid for 10 minutes. If you didn't request this varification, please ignore this email.</p>
                 </div>
                 <div class="email-footer">
                     <p>Thank you for joining us. <br> If you have any questions, feel free to reach out to us!</p>
