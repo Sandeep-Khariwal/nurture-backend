@@ -41,29 +41,26 @@ export const CreateQuestion = async (req: Request, res: Response) => {
 };
 export const UploadQuestioImage = async (req: Request, res: Response) => {
   try {
+    const files = req.files as {
+      questionImage?: Express.Multer.File[];
+    };
+
+    if (!files?.questionImage || files.questionImage.length === 0) {
+      res.status(400).json({ error: "questionImage is required" });
+    }
+
+    // Get the first file from the array
+    const uploadedFile = files.questionImage[0];
+
+    const questionImageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+      uploadedFile.filename
+    }`;
+    
     const { questionId } = req.body;
     let normalQuestion = questionId.startsWith("QS");
 
     const questionService = new QuestionService();
     const quizService = new QuizQuestionService();
-    const files = req.files as {
-      questionImage?: Express.Multer.File[];
-    };
-
-    if (!files?.questionImage) {
-      res.status(400).json({ error: "questionImage are required" });
-    }
-
-    const questionImage = files.questionImage[0];
-
-    // Upload to S3
-    const thumbnailS3Key = `questionImage/${Date.now()}_${
-      questionImage.originalname
-    }`;
-    const questionImageUrl = await uploadMediaFile(
-      questionImage,
-      thumbnailS3Key
-    );
 
     let response;
     if (questionImageUrl) {

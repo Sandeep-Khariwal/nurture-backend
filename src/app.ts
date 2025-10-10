@@ -1,5 +1,5 @@
 import express, { Express, Request, Response } from "express";
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
 import authRouter from "./routes/auth.route";
@@ -51,7 +51,9 @@ if (cluster.isPrimary) {
   }
 
   cluster.on("exit", (worker, code, signal) => {
-    console.error(`💀 Worker ${worker.process.pid} died (code: ${code}, signal: ${signal})`);
+    console.error(
+      `💀 Worker ${worker.process.pid} died (code: ${code}, signal: ${signal})`
+    );
     // Optional: Restart worker
     // cluster.fork();
   });
@@ -80,7 +82,6 @@ if (cluster.isPrimary) {
       );
       app.use(express.urlencoded({ extended: true }));
       app.use(bodyParser.json({ limit: "50mb" }));
-
       // Routes
       app.use(`/api/${VERSION}/auth`, authRouter);
       app.use(`/api/${VERSION}/admin`, adminRouter);

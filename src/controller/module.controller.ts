@@ -164,8 +164,8 @@ export const GetAllModules = async (req: clientRequest, res: Response) => {
     //if subscription expired? then update in db
     const isSubscriptionExpired = IsSubscriptionExpired(currentSubscription);
     if (isSubscriptionExpired) {
-      const examId = currentSubscription.examId
-      await studentService.expireStudentPlan(studentId,examId);
+      const examId = currentSubscription.examId;
+      await studentService.expireStudentPlan(studentId, examId);
     }
     isProModulesAccessible = IsProModulesAccessible(
       studentSubscriptionResp["user"],
@@ -220,12 +220,12 @@ export const GetAllCompletedModules = async (
   }
 };
 export const GetAllVideos = async (req: clientRequest, res: Response) => {
-  const { id } = req.params; 
-     const search = toStringParam(req.query.search);
+  const { id } = req.params;
+  const search = toStringParam(req.query.search);
 
   const modulesService = new ModuleService();
 
-  const response = await modulesService.getAllModulesVideos(id,search);
+  const response = await modulesService.getAllModulesVideos(id, search);
 
   if (response["status"] === 200) {
     res.status(response["status"]).json({
@@ -399,7 +399,7 @@ export const SubmitModuleResponse = async (
 
 export const AddVideoInModules = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const {title} = req.body
+  const { title } = req.body;
 
   try {
     const files = req.files as {
@@ -416,14 +416,15 @@ export const AddVideoInModules = async (req: Request, res: Response) => {
       const videoFile = files.video[0];
       const thumbnailFile = files.thumbnail[0];
 
-      // ✅ Generate unique names
-      const videoName = `videos/${Date.now()}-${videoFile.originalname}`;
-      const thumbnailName = `thumbnails/${Date.now()}-${
-        thumbnailFile.originalname
+      const videoUrl = `${req.protocol}://${req.get("host")}/uploads/${
+        videoFile.filename
+      }`;
+      const thumbnailUrl = `${req.protocol}://${req.get("host")}/uploads/${
+        thumbnailFile.filename
       }`;
 
-      const videoUrl = await uploadMediaFile(videoFile, videoName);
-      const thumbnailUrl = await uploadMediaFile(thumbnailFile, thumbnailName);
+      // const videoUrl = await uploadMediaFile(videoFile, videoName);
+      // const thumbnailUrl = await uploadMediaFile(thumbnailFile, thumbnailName);
 
       // Upload thumbnail to Cloudinary
       // const thumbnailResult = await cloudinary.uploader.upload(
