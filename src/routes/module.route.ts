@@ -17,10 +17,10 @@ moduleRouter.put("/restore/:id", authenticateToken , RestoreModules)
 moduleRouter.put("/deleteVideo", authenticateToken , DeleteVideoFromModule)
 moduleRouter.put(
   "/uploadVideo/:id",
-  upload.fields([
-    { name: "video" , maxCount:1},
-    { name: "thumbnail",maxCount:1},
-  ]),
+  // upload.fields([
+  //   { name: "video" , maxCount:1},
+  //   { name: "thumbnail",maxCount:1},
+  // ]),
   authenticateToken,
   AddVideoInModules
 );

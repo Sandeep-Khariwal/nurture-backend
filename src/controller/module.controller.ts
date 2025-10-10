@@ -12,8 +12,10 @@ import {
   IsProModulesAccessible,
   IsSubscriptionExpired,
 } from "../HelperFunction";
-import fs from "fs/promises";
 import { uploadMediaFile } from "../aws/awsHelper";
+import fs from "fs";
+import path from "path";
+import Busboy from "busboy";
 
 export const CreateModule = async (req: Request, res: Response) => {
   const { module, moduleId, moduleType } = req.body;
@@ -399,71 +401,91 @@ export const SubmitModuleResponse = async (
 
 export const AddVideoInModules = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title } = req.body;
+  let title = "";
+  let videoUrl = "";
+  let thumbnailUrl = "";
+  let videoFileName = "";
+  let thumbnailFileName = "";
 
   try {
-    const files = req.files as {
-      video?: Express.Multer.File[];
-      thumbnail?: Express.Multer.File[];
-    };
-    // ✅ Validate both files are present
-    if (!files?.video?.[0] || !files?.thumbnail?.[0]) {
-      res.status(400).json({
-        success: false,
-        message: "Both video and thumbnail files are required.",
+    const busboy = Busboy({ headers: req.headers });
+
+    // Ensure uploads folder exists
+    const uploadDir = path.join(process.cwd(), "uploads");
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    busboy.on("file", (fieldname, file, info) => {
+      const { filename, mimeType } = info;
+
+      const ext = path.extname(filename);
+      const uniqueName = `${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(2)}${ext}`;
+      const saveTo = path.join(uploadDir, uniqueName);
+
+      const writeStream = fs.createWriteStream(saveTo);
+      file.pipe(writeStream);
+
+      writeStream.on("error", (err) => {
+        console.error("File write error:", err);
+        res.status(500).json({ success: false, message: "File write error" });
       });
-    } else {
-      const videoFile = files.video[0];
-      const thumbnailFile = files.thumbnail[0];
 
-      const videoUrl = `${req.protocol}://${req.get("host")}/uploads/${
-        videoFile.filename
-      }`;
-      const thumbnailUrl = `${req.protocol}://${req.get("host")}/uploads/${
-        thumbnailFile.filename
-      }`;
+      if (fieldname === "video") {
+        videoFileName = uniqueName;
+        videoUrl = `${req.protocol}://${req.get("host")}/uploads/${uniqueName}`;
+      } else if (fieldname === "thumbnail") {
+        thumbnailFileName = uniqueName;
+        thumbnailUrl = `${req.protocol}://${req.get(
+          "host"
+        )}/uploads/${uniqueName}`;
+      }
+    });
 
-      // const videoUrl = await uploadMediaFile(videoFile, videoName);
-      // const thumbnailUrl = await uploadMediaFile(thumbnailFile, thumbnailName);
+    busboy.on("field", (fieldname, val) => {
+      if (fieldname === "title") title = val;
+    });
 
-      // Upload thumbnail to Cloudinary
-      // const thumbnailResult = await cloudinary.uploader.upload(
-      //   thumbnailFile.path,
-      //   {
-      //     folder: "modules_thumbnails",
-      //     resource_type: "image",
-      //   }
-      // );
-
-      // // Clean up temporary files
-      // await Promise.all([
-      //   // fs.unlink(videoFile.path),
-      //   fs.unlink(thumbnailFile.path),
-      // ]);
+    busboy.on("finish", async () => {
+      if (!videoUrl || !thumbnailUrl) {
+        return res.status(400).json({
+          success: false,
+          message: "Both video and thumbnail are required.",
+        });
+      }
 
       const data = {
         videoUrl: videoUrl,
         thumbnailUrl: thumbnailUrl,
         title: title,
       };
+      console.log("Video Uploaded:", data);
       //update video url in videos
       const moduleService = new ModuleService();
       const response = await moduleService.addVideoInModuleById(id, data);
-
       if (response["status"] === 200) {
-        res.status(response["status"]).json({
-          status: 200,
-          data: response["module"],
-          message: response["message"],
-        });
+        res
+          .status(response["status"])
+          .json({
+            status: 200,
+            data: response["module"],
+            message: response["message"],
+          });
       } else {
         res
           .status(response["status"])
           .json({ status: response["status"], message: response["message"] });
       }
-    }
-  } catch (error) {
-    res.status(500).json({ status: 500, message: error.message });
+    });
+
+    req.pipe(busboy);
+  } catch (error: any) {
+    console.error("Busboy upload error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error uploading video",
+      error: error.message,
+    });
   }
 };
 export const RestoreModules = async (req: Request, res: Response) => {

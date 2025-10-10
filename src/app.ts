@@ -82,6 +82,9 @@ if (cluster.isPrimary) {
       );
       app.use(express.urlencoded({ extended: true }));
       app.use(bodyParser.json({ limit: "50mb" }));
+
+      // 👇 Serve uploaded files publicly
+      app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
       // Routes
       app.use(`/api/${VERSION}/auth`, authRouter);
       app.use(`/api/${VERSION}/admin`, adminRouter);
